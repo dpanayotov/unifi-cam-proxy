@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калкулатор за Ресто</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const EXCHANGE_RATE = 1.95583;
+
+        // Lucide Icons as SVG components
+        const Calculator = () => (
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect width="16" height="20" x="4" y="2" rx="2"/>
+                <line x1="8" x2="16" y1="6" y2="6"/>
+                <line x1="16" x2="16" y1="14" y2="14"/>
+                <path d="M16 10h.01"/>
+                <path d="M12 10h.01"/>
+                <path d="M8 10h.01"/>
+                <path d="M12 14h.01"/>
+                <path d="M8 14h.01"/>
+                <path d="M12 18h.01"/>
+                <path d="M8 18h.01"/>
+            </svg>
+        );
+
+        const Euro = () => (
+            <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M4 10h12"/>
+                <path d="M4 14h9"/>
+                <path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12a7.9 7.9 0 0 0 7.8 8 7.7 7.7 0 0 0 5.2-2"/>
+            </svg>
+        );
+
+        const Coins = () => (
+            <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="8" cy="8" r="6"/>
+                <path d="M18.09 10.37A6 6 0 1 1 10.34 18"/>
+                <path d="M7 6h1v4"/>
+                <path d="m16.71 13.88.7.71-2.82 2.82"/>
+            </svg>
+        );
+
+        function CashRegister() {
+            const [billCurrency, setBillCurrency] = useState('BGN');
+            const [billAmount, setBillAmount] = useState('');
+            const [paidBGN, setPaidBGN] = useState('');
+            const [paidEUR, setPaidEUR] = useState('');
+            const [returnEUR, setReturnEUR] = useState('');
+            
+            // Изчисления
+            const billInBGN = billCurrency === 'BGN' 
+                ? parseFloat(billAmount) || 0 
+                : (parseFloat(billAmount) || 0) * EXCHANGE_RATE;
+            
+            const totalPaidBGN = (parseFloat(paidBGN) || 0) + (parseFloat(paidEUR) || 0) * EXCHANGE_RATE;
+            const changeBGN = totalPaidBGN - billInBGN;
+            const changeEUR = changeBGN / EXCHANGE_RATE;
+            
+            // Изчисление на разделеното ресто
+            const returnEURValue = parseFloat(returnEUR) || 0;
+            const returnBGNNeeded = changeBGN - (returnEURValue * EXCHANGE_RATE);
+            
+            const isValid = billAmount && (paidBGN || paidEUR);
+            const hasChange = isValid && changeBGN >= 0;
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+                    <div className="max-w-2xl mx-auto space-y-4">
+                        {/* Header */}
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="text-indigo-600">
+                                    <Calculator />
+                                </div>
+                                <h1 className="text-2xl font-bold text-gray-800">Калкулатор за Ресто</h1>
+                            </div>
+                            <p className="text-sm text-gray-600">Курс: 1 EUR = {EXCHANGE_RATE} BGN</p>
+                        </div>
+
+                        {/* Сметка */}
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4">Сметка</h2>
+                            <div className="flex gap-3">
+                                <div className="flex-1">
+                                    <input
+                                        type="number"
+                                        inputMode="decimal"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                        value={billAmount}
+                                        onChange={(e) => setBillAmount(e.target.value)}
+                                        className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setBillCurrency('BGN')}
+                                        className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                                            billCurrency === 'BGN'
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                        }`}
+                                    >
+                                        BGN
+                                    </button>
+                                    <button
+                                        onClick={() => setBillCurrency('EUR')}
+                                        className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                                            billCurrency === 'EUR'
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                        }`}
+                                    >
+                                        EUR
+                                    </button>
+                                </div>
+                            </div>
+                            {billCurrency === 'EUR' && billAmount && (
+                                <p className="text-sm text-gray-600 mt-2">
+                                    = {billInBGN.toFixed(2)} BGN
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Платена сума */}
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4">Платена сума</h2>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <Coins />
+                                        {' '}Лева (BGN)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        inputMode="decimal"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                        value={paidBGN}
+                                        onChange={(e) => setPaidBGN(e.target.value)}
+                                        className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <Euro />
+                                        {' '}Евро (EUR)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        inputMode="decimal"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                        value={paidEUR}
+                                        onChange={(e) => setPaidEUR(e.target.value)}
+                                        className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                                    />
+                                    {paidEUR && (
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            = {((parseFloat(paidEUR) || 0) * EXCHANGE_RATE).toFixed(2)} BGN
+                                        </p>
+                                    )}
+                                </div>
+                                {(paidBGN || paidEUR) && (
+                                    <div className="pt-2 border-t border-gray-200">
+                                        <p className="text-sm font-semibold text-gray-700">
+                                            Общо платено: {totalPaidBGN.toFixed(2)} BGN
+                                            {paidEUR && ` (${(totalPaidBGN / EXCHANGE_RATE).toFixed(2)} EUR)`}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Ресто */}
+                        {isValid && (
+                            <div className={`rounded-xl shadow-lg p-6 ${
+                                hasChange ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'
+                            }`}>
+                                <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                                    {hasChange ? 'Ресто' : 'Недостатъчна сума'}
+                                </h2>
+                                {hasChange ? (
+                                    <div className="space-y-3">
+                                        <div className="bg-white rounded-lg p-4">
+                                            <p className="text-3xl font-bold text-green-600">
+                                                {changeEUR.toFixed(2)} EUR
+                                            </p>
+                                            <p className="text-lg text-gray-600 mt-1">
+                                                {changeBGN.toFixed(2)} BGN
+                                            </p>
+                                        </div>
+
+                                        {/* Разпределяне на рестото */}
+                                        <div className="bg-white rounded-lg p-4 border-2 border-indigo-200">
+                                            <h3 className="font-semibold text-gray-800 mb-3">
+                                                Разпределяне на рестото
+                                            </h3>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Връщам евро (EUR)
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    step="0.01"
+                                                    placeholder="0.00"
+                                                    value={returnEUR}
+                                                    onChange={(e) => setReturnEUR(e.target.value)}
+                                                    className="w-full px-4 py-3 text-lg border-2 border-indigo-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                                                />
+                                            </div>
+                                            
+                                            {returnEUR && (
+                                                <div className="mt-4 space-y-2 p-3 bg-indigo-50 rounded-lg">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="font-semibold text-gray-700">Връщам:</span>
+                                                        <span className="text-lg font-bold text-indigo-600">
+                                                            {returnEURValue.toFixed(2)} EUR
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="font-semibold text-gray-700">Още трябва:</span>
+                                                        <span className={`text-lg font-bold ${
+                                                            returnBGNNeeded >= 0 ? 'text-green-600' : 'text-red-600'
+                                                        }`}>
+                                                            {returnBGNNeeded.toFixed(2)} BGN
+                                                        </span>
+                                                    </div>
+                                                    {returnBGNNeeded < 0 && (
+                                                        <p className="text-sm text-red-600 font-medium">
+                                                            ⚠️ Твърде много евро!
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-white rounded-lg p-4">
+                                        <p className="text-xl font-bold text-red-600">
+                                            Липсват: {Math.abs(changeBGN).toFixed(2)} BGN
+                                        </p>
+                                        <p className="text-lg text-gray-600 mt-1">
+                                            ({Math.abs(changeEUR).toFixed(2)} EUR)
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Бутон за изчистване */}
+                        <button
+                            onClick={() => {
+                                setBillAmount('');
+                                setPaidBGN('');
+                                setPaidEUR('');
+                                setReturnEUR('');
+                            }}
+                            className="w-full py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-colors"
+                        >
+                            Изчисти всичко
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<CashRegister />);
+    </script>
+</body>
+</html>
